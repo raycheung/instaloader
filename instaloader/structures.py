@@ -1281,12 +1281,14 @@ class Profile:
                     "include_relationship_info": True,
                     "latest_besties_reel_media": True,
                     "latest_reel_media": True,
+                    **({"include_reel_media_seen_timestamp": True} if logged_in else {}),
                 },
-                **({"username": self.username} if logged_in else {"id": self.userid}),
+                **({"username": self.username, **self._context.profile_posts_relay_providers}
+                   if logged_in else {"id": self.userid}),
             },
             query_referer="https://www.instagram.com/{0}/".format(self.username),
             is_first=Profile._make_is_newest_checker(),
-            doc_id="7898261790222653" if logged_in else "7950326061742207",
+            doc_id=self._context.profile_posts_doc_id if logged_in else "7950326061742207",
             query_hash=None,
             first_data=(None if logged_in else self._metadata("edge_owner_to_timeline_media")),
         )

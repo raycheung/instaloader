@@ -63,6 +63,14 @@ def default_iphone_headers() -> Dict[str, Any]:
             'x-whatsapp': '0'}
 
 
+DEFAULT_PROFILE_POSTS_DOC_ID = "28542612348729311"
+DEFAULT_PROFILE_POSTS_RELAY_PROVIDERS: Dict[str, Any] = {
+    "__relay_internal__pv__PolarisMultiCaptionCarouselEnabledrelayprovider": True,
+    "__relay_internal__pv__PolarisShortDramaEnabledrelayprovider": False,
+    "__relay_internal__pv__PolarisReelsRecoDebugOverlayEnabledrelayprovider": False,
+}
+
+
 class InstaloaderContext:
     """Class providing methods for (error) logging and low-level communication with Instagram.
 
@@ -82,7 +90,9 @@ class InstaloaderContext:
                  max_connection_attempts: int = 3, request_timeout: float = 300.0,
                  rate_controller: Optional[Callable[["InstaloaderContext"], "RateController"]] = None,
                  fatal_status_codes: Optional[List[int]] = None,
-                 iphone_support: bool = True):
+                 iphone_support: bool = True,
+                 profile_posts_doc_id: Optional[str] = None,
+                 profile_posts_relay_providers: Optional[Dict[str, Any]] = None):
 
         self.user_agent = user_agent if user_agent is not None else default_user_agent()
         self.request_timeout = request_timeout
@@ -107,6 +117,15 @@ class InstaloaderContext:
 
         # HTTP status codes that should cause an AbortDownloadException
         self.fatal_status_codes = fatal_status_codes or []
+
+        # Logged-in profile posts query; Instagram rotates it, so it's overridable without a release
+        self.profile_posts_doc_id = (profile_posts_doc_id or os.environ.get("INSTALOADER_PROFILE_POSTS_DOC_ID")
+                                     or DEFAULT_PROFILE_POSTS_DOC_ID)
+        env_relay_providers = os.environ.get("INSTALOADER_PROFILE_POSTS_RELAY_PROVIDERS")
+        self.profile_posts_relay_providers: Dict[str, Any] = (
+            profile_posts_relay_providers if profile_posts_relay_providers is not None
+            else json.loads(env_relay_providers) if env_relay_providers
+            else DEFAULT_PROFILE_POSTS_RELAY_PROVIDERS)
 
         # Cache profile from id (mapping from id to Profile)
         self.profile_id_cache: Dict[int, Any] = dict()

@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Callable, IO, Iterator, List, Optional, Set, Union, cast
+from typing import Any, Callable, Dict, IO, Iterator, List, Optional, Set, Union, cast
 from urllib.parse import urlparse
 
 import requests
@@ -202,6 +202,10 @@ class Instaloader:
     :param fatal_status_codes: :option:`--abort-on`
     :param iphone_support: not :option:`--no-iphone`
     :param sanitize_paths: :option:`--sanitize-paths`
+    :param profile_posts_doc_id: doc_id of the logged-in profile posts query, or None for
+       ``$INSTALOADER_PROFILE_POSTS_DOC_ID``, falling back to the built-in one
+    :param profile_posts_relay_providers: ``__relay_internal__pv__*`` variables that query requires, or None for
+       ``$INSTALOADER_PROFILE_POSTS_RELAY_PROVIDERS`` (a JSON object), falling back to the built-in ones
 
     .. attribute:: context
 
@@ -232,11 +236,13 @@ class Instaloader:
                  fatal_status_codes: Optional[List[int]] = None,
                  iphone_support: bool = True,
                  title_pattern: Optional[str] = None,
-                 sanitize_paths: bool = False):
+                 sanitize_paths: bool = False,
+                 profile_posts_doc_id: Optional[str] = None,
+                 profile_posts_relay_providers: Optional[Dict[str, Any]] = None):
 
         self.context = InstaloaderContext(sleep, quiet, user_agent, max_connection_attempts,
                                           request_timeout, rate_controller, fatal_status_codes,
-                                          iphone_support)
+                                          iphone_support, profile_posts_doc_id, profile_posts_relay_providers)
 
         # configuration parameters
         self.dirname_pattern = dirname_pattern or "{target}"
@@ -314,7 +320,9 @@ class Instaloader:
             slide=self.slide,
             fatal_status_codes=self.context.fatal_status_codes,
             iphone_support=self.context.iphone_support,
-            sanitize_paths=self.sanitize_paths)
+            sanitize_paths=self.sanitize_paths,
+            profile_posts_doc_id=self.context.profile_posts_doc_id,
+            profile_posts_relay_providers=self.context.profile_posts_relay_providers)
         yield new_loader
         self.context.error_log.extend(new_loader.context.error_log)
         new_loader.context.error_log = []  # avoid double-printing of errors
