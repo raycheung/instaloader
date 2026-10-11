@@ -206,6 +206,10 @@ class Instaloader:
        ``$INSTALOADER_PROFILE_POSTS_DOC_ID``, falling back to the built-in one
     :param profile_posts_relay_providers: ``__relay_internal__pv__*`` variables that query requires, or None for
        ``$INSTALOADER_PROFILE_POSTS_RELAY_PROVIDERS`` (a JSON object), falling back to the built-in ones
+    :param profile_reels_doc_id: doc_id of the logged-in profile reels query, or None for
+       ``$INSTALOADER_PROFILE_REELS_DOC_ID``, falling back to the built-in one
+    :param profile_reels_relay_providers: ``__relay_internal__pv__*`` variables that query requires, or None for
+       ``$INSTALOADER_PROFILE_REELS_RELAY_PROVIDERS`` (a JSON object), falling back to the built-in ones
 
     .. attribute:: context
 
@@ -238,11 +242,14 @@ class Instaloader:
                  title_pattern: Optional[str] = None,
                  sanitize_paths: bool = False,
                  profile_posts_doc_id: Optional[str] = None,
-                 profile_posts_relay_providers: Optional[Dict[str, Any]] = None):
+                 profile_posts_relay_providers: Optional[Dict[str, Any]] = None,
+                 profile_reels_doc_id: Optional[str] = None,
+                 profile_reels_relay_providers: Optional[Dict[str, Any]] = None):
 
         self.context = InstaloaderContext(sleep, quiet, user_agent, max_connection_attempts,
                                           request_timeout, rate_controller, fatal_status_codes,
-                                          iphone_support, profile_posts_doc_id, profile_posts_relay_providers)
+                                          iphone_support, profile_posts_doc_id, profile_posts_relay_providers,
+                                          profile_reels_doc_id, profile_reels_relay_providers)
 
         # configuration parameters
         self.dirname_pattern = dirname_pattern or "{target}"
@@ -322,7 +329,9 @@ class Instaloader:
             iphone_support=self.context.iphone_support,
             sanitize_paths=self.sanitize_paths,
             profile_posts_doc_id=self.context.profile_posts_doc_id,
-            profile_posts_relay_providers=self.context.profile_posts_relay_providers)
+            profile_posts_relay_providers=self.context.profile_posts_relay_providers,
+            profile_reels_doc_id=self.context.profile_reels_doc_id,
+            profile_reels_relay_providers=self.context.profile_reels_relay_providers)
         yield new_loader
         self.context.error_log.extend(new_loader.context.error_log)
         new_loader.context.error_log = []  # avoid double-printing of errors

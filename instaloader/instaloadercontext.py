@@ -69,6 +69,10 @@ DEFAULT_PROFILE_POSTS_RELAY_PROVIDERS: Dict[str, Any] = {
     "__relay_internal__pv__PolarisShortDramaEnabledrelayprovider": False,
     "__relay_internal__pv__PolarisReelsRecoDebugOverlayEnabledrelayprovider": False,
 }
+DEFAULT_PROFILE_REELS_DOC_ID = "28217628591240469"
+DEFAULT_PROFILE_REELS_RELAY_PROVIDERS: Dict[str, Any] = {
+    "__relay_internal__pv__PolarisShortDramaEnabledrelayprovider": True,
+}
 
 
 class InstaloaderContext:
@@ -92,7 +96,9 @@ class InstaloaderContext:
                  fatal_status_codes: Optional[List[int]] = None,
                  iphone_support: bool = True,
                  profile_posts_doc_id: Optional[str] = None,
-                 profile_posts_relay_providers: Optional[Dict[str, Any]] = None):
+                 profile_posts_relay_providers: Optional[Dict[str, Any]] = None,
+                 profile_reels_doc_id: Optional[str] = None,
+                 profile_reels_relay_providers: Optional[Dict[str, Any]] = None):
 
         self.user_agent = user_agent if user_agent is not None else default_user_agent()
         self.request_timeout = request_timeout
@@ -126,6 +132,13 @@ class InstaloaderContext:
             profile_posts_relay_providers if profile_posts_relay_providers is not None
             else json.loads(env_relay_providers) if env_relay_providers
             else DEFAULT_PROFILE_POSTS_RELAY_PROVIDERS)
+        self.profile_reels_doc_id = (profile_reels_doc_id or os.environ.get("INSTALOADER_PROFILE_REELS_DOC_ID")
+                                     or DEFAULT_PROFILE_REELS_DOC_ID)
+        env_reels_relay_providers = os.environ.get("INSTALOADER_PROFILE_REELS_RELAY_PROVIDERS")
+        self.profile_reels_relay_providers: Dict[str, Any] = (
+            profile_reels_relay_providers if profile_reels_relay_providers is not None
+            else json.loads(env_reels_relay_providers) if env_reels_relay_providers
+            else DEFAULT_PROFILE_REELS_RELAY_PROVIDERS)
 
         # Cache profile from id (mapping from id to Profile)
         self.profile_id_cache: Dict[int, Any] = dict()
