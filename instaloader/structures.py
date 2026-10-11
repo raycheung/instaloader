@@ -15,6 +15,8 @@ from .instaloadercontext import InstaloaderContext
 from .nodeiterator import FrozenNodeIterator, NodeIterator
 from .sectioniterator import SectionIterator
 
+_MEDIA_ID_EPOCH_MS = 1314220021721  # media ID >> 23 counts milliseconds from this Unix time
+
 
 class PostSidecarNode(NamedTuple):
     """Item of a Sidecar Post."""
@@ -1468,9 +1470,23 @@ class Profile:
             is_first=Profile._make_is_newest_checker()
         )
 
-    def get_reels(self) -> NodeIterator[Post]:
+    @staticmethod
+    def _keep_reels_newer_than(connection: Dict[str, Any], newer_than: Optional[datetime]) -> Dict[str, Any]:
+        if newer_than is None:
+            return connection
+        cutoff_ms = newer_than.timestamp() * 1000
+        is_new = lambda edge: (int(edge["node"]["media"]["pk"]) >> 23) + _MEDIA_ID_EPOCH_MS > cutoff_ms
+        edges = connection["edges"]
+        more = connection["page_info"]["has_next_page"] and (not edges or is_new(edges[-1]))
+        return {**connection,
+                "edges": [edge for edge in edges if is_new(edge)],
+                "page_info": {**connection["page_info"], "has_next_page": more}}
+
+    def get_reels(self, newer_than: Optional[datetime] = None) -> NodeIterator[Post]:
         """Retrieve all reels from a profile.
 
+        :param newer_than: When logged in, only yield reels uploaded after this time, and stop paging at the
+           first older one. The upload time comes from each reel's media ID, so older reels cost no request.
         :rtype: NodeIterator[Post]
 
         .. versionadded:: 4.14.0
@@ -1480,7 +1496,8 @@ class Profile:
         if self._context.is_logged_in:
             return NodeIterator(
                 context=self._context,
-                edge_extractor=lambda d: d["data"]["fetch__XDTUserDict"]["clips_connection"],
+                edge_extractor=lambda d: Profile._keep_reels_newer_than(
+                    d["data"]["fetch__XDTUserDict"]["clips_connection"], newer_than),
                 node_wrapper=lambda n: Post.from_iphone_struct(self._context, self._context.get_iphone_json(
                     "api/v1/media/{}/info/".format(n["media"]["pk"]), params={})["items"][0]),
                 query_variables={
