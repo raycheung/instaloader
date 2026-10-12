@@ -1477,6 +1477,22 @@ class Profile:
 
         """
         self._obtain_metadata()
+        if self._context.is_logged_in:
+            return NodeIterator(
+                context=self._context,
+                edge_extractor=lambda d: d["data"]["fetch__XDTUserDict"]["clips_connection"],
+                node_wrapper=lambda n: Post.from_iphone_struct(self._context, self._context.get_iphone_json(
+                    "api/v1/media/{}/info/".format(n["media"]["pk"]), params={})["items"][0]),
+                query_variables={
+                    "data": {"include_feed_video": True, "page_size": 12, "target_user_id": str(self.userid)},
+                    "user_id": str(self.userid),
+                    "__relay_internal__pv__PolarisShortDramaEnabledrelayprovider": True,
+                },
+                query_referer="https://www.instagram.com/{0}/reels/".format(self.username),
+                is_first=Profile._make_is_newest_checker(),
+                doc_id="28217628591240469",
+                query_hash=None,
+            )
         return NodeIterator(
             context = self._context,
             edge_extractor = lambda d: d['data']['xdt_api__v1__clips__user__connection_v2'],
