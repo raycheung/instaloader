@@ -125,6 +125,8 @@ class InstaloaderContext:
         # Cache profile from id (mapping from id to Profile)
         self.profile_id_cache: Dict[int, Any] = dict()
 
+        self.profile_page_refused = False
+
     @contextmanager
     def anonymous_copy(self):
         session = self._session
