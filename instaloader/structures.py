@@ -1006,8 +1006,16 @@ class Profile:
         # with HTTP 400 for some professional profiles, and with HTTP 401 or 429 for some
         # sessions, both anonymously and when logged in.
         try:
-            page = context.get_page_data("{0}/".format(username.lower()))
+            page = [] if context.profile_page_refused else context.get_page_data("{0}/".format(username.lower()))
         except QueryReturnedNotFoundException:
+            page = []
+        except ConnectionException as err:
+            if not context.is_logged_in:
+                raise
+            # Instagram redirects logged-out visitors from some IPs to its login page.
+            context.profile_page_refused = True
+            context.error("Profile pages are refused ({}), looking profiles up by search instead.".format(err),
+                          repeat_at_end=False)
             page = []
         # The page embeds two queries for the profile: one for its details and one for its
         # posts.
@@ -1015,6 +1023,8 @@ class Profile:
         for data in page:
             user.update(data.get("xig_user_by_username") or {})
         if not user.get("pk"):
+            if context.is_logged_in:
+                return cls._from_username_search(context, username)
             raise ProfileNotExistsException("Profile {} does not exist.".format(username))
         user.pop("polaris_ordered_timeline_connection", None)
         # The page's "id" is not the user ID, which is "pk".
@@ -1025,6 +1035,15 @@ class Profile:
             # followed_by_viewer, to the GraphQL profile query in _obtain_metadata().
             return cls(context, node)
         return cls(context, cls._normalize_profile_data(node))
+
+    @classmethod
+    def _from_username_search(cls, context: InstaloaderContext, username: str):
+        data = context.doc_id_graphql_query("26347858941511777", {"hasQuery": True, "query": username})["data"]
+        if data:
+            for user in data["xdt_api__v1__fbsearch__non_profiled_serp"]["users"]:
+                if user["username"].lower() == username.lower():
+                    return cls(context, user)
+        raise ProfileNotExistsException("Profile {} does not exist.".format(username))
 
     @classmethod
     def from_id(cls, context: InstaloaderContext, profile_id: int):
