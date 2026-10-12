@@ -128,6 +128,8 @@ class InstaloaderContext:
         # Tokens of the logged-in web page for api/graphql queries, by sessionid cookie
         self._web_api_tokens_cache: Dict[str, Dict[str, str]] = dict()
 
+        self.profile_page_refused = False
+
     @contextmanager
     def anonymous_copy(self):
         session = self._session
