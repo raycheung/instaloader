@@ -1446,12 +1446,13 @@ class Profile:
                 "include_multi_captions": True,
                 "username": self.username,
                 "__relay_internal__pv__PolarisMultiCaptionCarouselEnabledrelayprovider": True,
-                "__relay_internal__pv__PolarisShortDramaEnabledrelayprovider": False,
+                "__relay_internal__pv__PolarisShortDramaEnabledrelayprovider": True,
+                "__relay_internal__pv__PolarisThreadsStyleCommentsEnabledrelayprovider": False,
                 "__relay_internal__pv__PolarisReelsRecoDebugOverlayEnabledrelayprovider": False,
             },
             query_referer="https://www.instagram.com/{0}/".format(self.username),
             is_first=Profile._make_is_newest_checker(),
-            doc_id="28975909992013618",
+            doc_id="29298961806354817",
             query_hash=None,
         )
 
