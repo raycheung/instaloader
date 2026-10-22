@@ -429,7 +429,7 @@ class InstaloaderContext:
             host, path, resp.status_code, resp.reason, redirect, body
         ))
 
-    def _raise_if_login_redirect(self, resp: requests.Response) -> None:
+    def _raise_if_login_redirect(self, resp: requests.Response, logged_in: Optional[bool] = None) -> None:
         """Turn a redirect to the login page into a meaningful exception.
 
         Instagram answers requests it will not serve anonymously with a redirect to the login page
@@ -442,7 +442,7 @@ class InstaloaderContext:
         if not (redirect_url.startswith('https://www.instagram.com/accounts/login') or
                 redirect_url.startswith('https://i.instagram.com/accounts/login')):
             return
-        if not self.is_logged_in:
+        if not (self.is_logged_in if logged_in is None else logged_in):
             raise LoginRequiredException("Redirected to login page. Use --login or --load-cookies.")
         raise AbortDownloadException("Redirected to login page. You've been logged out, please wait " +
                                      "some time, recreate the session and try again")
@@ -791,7 +791,7 @@ class InstaloaderContext:
             resp = session.get(url, headers=headers, allow_redirects=False)
         except requests.exceptions.RequestException as err:
             raise ConnectionException("Page request to {}: {}".format(url, err)) from err
-        self._raise_if_login_redirect(resp)
+        self._raise_if_login_redirect(resp, logged_in=session is self._session and self.is_logged_in)
         if resp.status_code == 404:
             raise QueryReturnedNotFoundException(self._response_error(resp))
         if resp.status_code != 200:
@@ -808,6 +808,7 @@ class InstaloaderContext:
         :return: The ``data`` object of each query result that the page embeds, in page order.
         :raises QueryReturnedNotFoundException: When the server responds with a 404.
         :raises ConnectionException: When the request failed.
+        :raises LoginRequiredException: When Instagram redirects the logged-out visitor to its login page.
         """
         with self.get_anonymous_session() as anonymous_session:
             html = self._get_page(anonymous_session, path)

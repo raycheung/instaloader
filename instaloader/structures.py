@@ -1009,7 +1009,7 @@ class Profile:
             page = [] if context.profile_page_refused else context.get_page_data("{0}/".format(username.lower()))
         except QueryReturnedNotFoundException:
             page = []
-        except ConnectionException as err:
+        except (ConnectionException, LoginRequiredException) as err:
             if not context.is_logged_in:
                 raise
             # Instagram redirects logged-out visitors from some IPs to its login page.
