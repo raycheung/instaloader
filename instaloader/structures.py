@@ -8,6 +8,7 @@ from itertools import islice
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Iterator, List, NamedTuple, Optional, Tuple, Union
 from unicodedata import normalize
+from uuid import uuid4
 
 from . import __version__
 from .exceptions import *
@@ -1016,10 +1017,24 @@ class Profile:
             user.update(data.get("xig_user_by_username") or {})
         if not user.get("pk"):
             if context.is_logged_in:
-                data = context.doc_id_graphql_query("26347858941511777", {"hasQuery": True, "query": username})["data"]
-                for found in data["xdt_api__v1__fbsearch__non_profiled_serp"]["users"] if data else []:
-                    if found["username"].lower() == username.lower():
-                        return cls(context, found)
+                data = context.doc_id_graphql_query(
+                    "27706427925724183",
+                    {
+                        "data": {
+                            "context": "blended",
+                            "include_reel": "true",
+                            "query": username,
+                            "rank_token": "",
+                            "search_session_id": str(uuid4()),
+                            "search_surface": "web_top_search",
+                        },
+                        "hasQuery": True,
+                    },
+                    web_api=True,
+                )["data"]
+                for found in data["xdt_api__v1__fbsearch__topsearch_connection"]["users"] if data else []:
+                    if found["user"]["username"].lower() == username.lower():
+                        return cls(context, found["user"])
             raise ProfileNotExistsException("Profile {} does not exist.".format(username))
         user.pop("polaris_ordered_timeline_connection", None)
         # The page's "id" is not the user ID, which is "pk".
