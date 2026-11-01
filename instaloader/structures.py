@@ -1564,6 +1564,7 @@ class Profile:
                 is_first=Profile._make_is_newest_checker(),
                 doc_id="28217628591240469",
                 query_hash=None,
+                web_api=True,
             )
         return NodeIterator(
             context = self._context,
